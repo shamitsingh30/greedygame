@@ -1,11 +1,16 @@
 package models
 
 import (
-	"github.com/shamitsingh30/greedygame/pkg/types"
+	"sync"
 )
 
-func NewDatastore() *types.Datastore {
-	return &types.Datastore{
-		Data: make(map[string]string),
+type Datastore struct {
+	Data map[string]string
+	sync.RWMutex
+}
+
+func NewDatastore() *Datastore {
+	return &Datastore{
+		Data: map[string]string{},
 	}
 }
