@@ -18,10 +18,10 @@ func ValidateFunc(command *string) (map[string]string, error) {
 	}
 
 	newReqBody["querytype"] = words[0]
+	newReqBody["key"] = words[1]
 
 	var err interface{} = nil
-	if length >= 3 && words[0] == "SET" {
-		newReqBody["key"] = words[1]
+	if words[0] == "SET" && length >= 3 {
 		newReqBody["value"] = words[2]
 		if length == 3 {
 
@@ -43,19 +43,19 @@ func ValidateFunc(command *string) (map[string]string, error) {
 		} else {
 			return newReqBody, errorText
 		}
-	} else if length == 2 && words[0] == "GET" {
-		newReqBody["querytype"] = "GET"
-		newReqBody["key"] = words[1]
-	} else if length >= 3 && words[0] == "QPUSH" {
-		newReqBody["querytype"] = "QPUSH"
-		newReqBody["key"] = words[1]
+	} else if words[0] == "GET" && length == 2 {
+
+	} else if words[0] == "QPUSH" && length >= 3 {
 		newReqBody["items"] = words[2]
-		for i := 3; i < len(words); i++ {
-			newReqBody["items"] = newReqBody["items"] + " " + words[i]
+		for _, el := range words[3:] {
+			newReqBody["items"] = newReqBody["items"] + " " + el
 		}
-	} else if length == 2 && words[0] == "QPOP" {
-		newReqBody["querytype"] = "QPOP"
-		newReqBody["key"] = words[1]
+	} else if words[0] == "QPOP" && length == 2 {
+
+	} else if words[0] == "BQPOP" && length == 3 {
+
+	} else {
+		return newReqBody, errorText
 	}
 
 	fmt.Println("Validation checkpoint", words)

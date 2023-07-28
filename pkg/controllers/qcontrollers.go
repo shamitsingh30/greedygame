@@ -35,6 +35,9 @@ func Pop_controller(body *map[string]string, qb *(models.Queuestore)) (string, e
 		poppedElement := qb.Data[key][len(qb.Data[key])-1]
 		qb.Data[key] = qb.Data[key][:len(qb.Data[key])-1]
 
+		if len(qb.Data[key]) == 0 {
+			delete(qb.Data, key)
+		}
 		return poppedElement, nil
 	}
 	return "", errors.New("queue is empty")

@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -31,16 +32,16 @@ func Set_controller(body *map[string]string, db *(models.Datastore)) {
 		e.Expiration = time.Now().Add(time.Duration(expiryTime) * time.Second)
 	}
 	db.Lock()
+	defer db.Unlock()
 	db.Data[key] = e
-
-	db.Unlock()
+	fmt.Println(db)
 	return
 }
 
 func Get_controller(body *map[string]string, db *(models.Datastore)) (string, string, error) {
 
-	db.RLock()
-	defer db.RUnlock()
+	db.Lock()
+	defer db.Unlock()
 
 	key := (*body)["key"]
 	val, exists := db.Data[key]

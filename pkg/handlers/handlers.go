@@ -25,7 +25,6 @@ func ApiHandler(db *models.Datastore, qb *models.Queuestore) http.HandlerFunc {
 
 		err := json.NewDecoder(r.Body).Decode(&requestBody)
 		if err != nil || requestBody.Command == "" {
-			// http.Error(w, "Invalid request body", http.StatusBadRequest)
 			resp["error"] = "invalid command"
 			jsonResp, _ := json.Marshal(resp)
 			w.Write(jsonResp)
@@ -34,7 +33,6 @@ func ApiHandler(db *models.Datastore, qb *models.Queuestore) http.HandlerFunc {
 
 		newReqBody, err := validation.ValidateFunc(&requestBody.Command)
 		if err != nil {
-			// http.Error(w, "Invalid request body", http.StatusBadRequest)
 			resp["error"] = err.Error()
 			jsonResp, _ := json.Marshal(resp)
 			w.Write(jsonResp)
@@ -42,35 +40,49 @@ func ApiHandler(db *models.Datastore, qb *models.Queuestore) http.HandlerFunc {
 		}
 
 		querytype := newReqBody["querytype"]
+		done := make(chan struct{})
 
 		switch querytype {
 		case "SET":
-			controllers.Set_controller(&newReqBody, db)
+			go func() {
+				controllers.Set_controller(&newReqBody, db)
+			}()
 		case "GET":
-			key, val, err := controllers.Get_controller(&newReqBody, db)
+			go func() {
+				key, val, err := controllers.Get_controller(&newReqBody, db)
+				fmt.Println(key, val, err)
+				if err == nil {
+					resp[key] = val
+				} else {
+					resp["error"] = err.Error()
+				}
+				jsonResp, _ := json.Marshal(resp)
+				w.Write(jsonResp)
+				done <- struct{}{}
+			}()
 
-			if err == nil {
-				resp[key] = val
-			} else {
-				resp["error"] = err.Error()
-			}
-
-			jsonResp, _ := json.Marshal(resp)
-			w.Write(jsonResp)
+			<-done
 
 		case "QPUSH":
-			controllers.Push_controller(&newReqBody, qb)
-			fmt.Println(qb.Data)
+			go func() {
+				controllers.Push_controller(&newReqBody, qb)
+				fmt.Println(qb.Data)
+			}()
 
 		case "QPOP":
-			x, err := controllers.Pop_controller(&newReqBody, qb)
-			if err == nil {
-				resp["value"] = x
-			} else {
-				resp["error"] = err.Error()
-			}
-			jsonResp, _ := json.Marshal(resp)
-			w.Write(jsonResp)
+			go func() {
+				x, err := controllers.Pop_controller(&newReqBody, qb)
+				if err == nil {
+					resp["value"] = x
+				} else {
+					resp["error"] = err.Error()
+				}
+				jsonResp, _ := json.Marshal(resp)
+				w.Write(jsonResp)
+				done <- struct{}{}
+			}()
+
+			<-done
 		}
 
 	}
