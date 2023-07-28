@@ -61,6 +61,17 @@ func ApiHandler(db *models.Datastore, qb *models.Queuestore) http.HandlerFunc {
 		case "QPUSH":
 			controllers.Push_controller(&newReqBody, qb)
 			fmt.Println(qb.Data)
+
+		case "QPOP":
+			x, err := controllers.Pop_controller(&newReqBody, qb)
+			if err == nil {
+				resp["value"] = x
+			} else {
+				resp["error"] = err.Error()
+			}
+			jsonResp, _ := json.Marshal(resp)
+			w.Write(jsonResp)
 		}
+
 	}
 }

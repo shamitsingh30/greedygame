@@ -53,6 +53,9 @@ func ValidateFunc(command *string) (map[string]string, error) {
 		for i := 3; i < len(words); i++ {
 			newReqBody["items"] = newReqBody["items"] + " " + words[i]
 		}
+	} else if length == 2 && words[0] == "QPOP" {
+		newReqBody["querytype"] = "QPOP"
+		newReqBody["key"] = words[1]
 	}
 
 	fmt.Println("Validation checkpoint", words)

@@ -10,7 +10,7 @@ type Queue struct {
 
 type Queuestore struct {
 	Data map[string][]string
-	sync.RWMutex
+	sync.Mutex
 }
 
 func NewQueuestore() *Queuestore {
