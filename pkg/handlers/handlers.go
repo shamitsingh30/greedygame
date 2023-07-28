@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/shamitsingh30/greedygame/pkg/controllers"
@@ -13,7 +14,7 @@ type CommandRequest struct {
 	Command string `json:"command"`
 }
 
-func ApiHandler(db *models.Datastore) http.HandlerFunc {
+func ApiHandler(db *models.Datastore, qb *models.Queuestore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		var requestBody CommandRequest
@@ -40,9 +41,12 @@ func ApiHandler(db *models.Datastore) http.HandlerFunc {
 			return
 		}
 
-		if newReqBody["querytype"] == "SET" {
+		querytype := newReqBody["querytype"]
+
+		switch querytype {
+		case "SET":
 			controllers.Set_controller(&newReqBody, db)
-		} else if newReqBody["querytype"] == "GET" {
+		case "GET":
 			key, val, err := controllers.Get_controller(&newReqBody, db)
 
 			if err == nil {
@@ -53,7 +57,10 @@ func ApiHandler(db *models.Datastore) http.HandlerFunc {
 
 			jsonResp, _ := json.Marshal(resp)
 			w.Write(jsonResp)
-			return
+
+		case "QPUSH":
+			controllers.Push_controller(&newReqBody, qb)
+			fmt.Println(qb.Data)
 		}
 	}
 }

@@ -11,11 +11,12 @@ import (
 func main() {
 
 	database := models.NewDatastore()
+	queuebase := models.NewQueuestore()
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Hello World!")
 	})
-	http.HandleFunc("/check", handlers.ApiHandler(database))
+	http.HandleFunc("/check", handlers.ApiHandler(database, queuebase))
 
 	err := http.ListenAndServe(":8000", nil) // set listen port and handle
 	if err != nil {
