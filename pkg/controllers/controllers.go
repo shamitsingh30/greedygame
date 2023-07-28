@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"errors"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -34,7 +33,6 @@ func Set_controller(body *map[string]string, db *(models.Datastore)) {
 	db.Lock()
 	defer db.Unlock()
 	db.Data[key] = e
-	fmt.Println(db)
 	return
 }
 

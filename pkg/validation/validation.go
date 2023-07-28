@@ -2,7 +2,6 @@ package validation
 
 import (
 	"errors"
-	"fmt"
 	"strconv"
 	"strings"
 )
@@ -58,6 +57,5 @@ func ValidateFunc(command *string) (map[string]string, error) {
 		return newReqBody, errorText
 	}
 
-	fmt.Println("Validation checkpoint", words)
 	return newReqBody, nil
 }
