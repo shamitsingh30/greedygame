@@ -66,6 +66,16 @@ func ApiHandler(db *models.Datastore, qb *models.Queuestore) http.HandlerFunc {
 			}
 			jsonResp, _ := json.Marshal(resp)
 			w.Write(jsonResp)
+
+		case "BQPOP":
+			x, err := controllers.BQpop_controller(&newReqBody, qb)
+			if err == nil {
+				resp["value"] = x
+			} else {
+				resp["error"] = err.Error()
+			}
+			jsonResp, _ := json.Marshal(resp)
+			w.Write(jsonResp)
 		}
 	}
 }

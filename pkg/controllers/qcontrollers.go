@@ -2,7 +2,9 @@ package controllers
 
 import (
 	"errors"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/shamitsingh30/greedygame/pkg/models"
 )
@@ -41,4 +43,36 @@ func Pop_controller(body *map[string]string, qb *(models.Queuestore)) (string, e
 		return poppedElement, nil
 	}
 	return "", errors.New("queue is empty")
+}
+
+func BQpop_controller(body *map[string]string, qb *(models.Queuestore)) (string, error) {
+
+	key := (*body)["key"]
+	seconds, _ := strconv.ParseFloat((*body)["timeout"], 64)
+	nanoseconds := int64(seconds * float64(time.Second))
+	duration := time.Duration(nanoseconds)
+
+	qb.Lock()
+	items, ok := qb.Data[key]
+	if !ok || (len(items) == 0) {
+		qb.Unlock()
+		select {
+		case <-time.After(duration):
+			qb.Lock()
+			defer qb.Unlock()
+			items, ok := qb.Data[key]
+			if !ok || len(items) == 0 {
+				return "", errors.New("queue is empty")
+			}
+		}
+	}
+
+	poppedElement := items[len(items)-1]
+	items = items[:len(items)-1]
+
+	if len(items) == 0 {
+		delete(qb.Data, key)
+	}
+	qb.Unlock()
+	return poppedElement, nil
 }

@@ -52,7 +52,12 @@ func ValidateFunc(command *string) (map[string]string, error) {
 	} else if words[0] == "QPOP" && length == 2 {
 
 	} else if words[0] == "BQPOP" && length == 3 {
-
+		_, err = strconv.Atoi(words[2])
+		if err != nil {
+			return newReqBody, errorText
+		} else {
+			newReqBody["timeout"] = words[2]
+		}
 	} else {
 		return newReqBody, errorText
 	}
