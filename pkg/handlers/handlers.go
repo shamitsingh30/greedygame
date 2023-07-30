@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/shamitsingh30/greedygame/pkg/controllers"
@@ -40,50 +39,33 @@ func ApiHandler(db *models.Datastore, qb *models.Queuestore) http.HandlerFunc {
 		}
 
 		querytype := newReqBody["querytype"]
-		done := make(chan struct{})
 
 		switch querytype {
 		case "SET":
-			go func() {
-				controllers.Set_controller(&newReqBody, db)
-			}()
+			controllers.Set_controller(&newReqBody, db)
 		case "GET":
-			go func() {
-				key, val, err := controllers.Get_controller(&newReqBody, db)
-				fmt.Println(key, val, err)
-				if err == nil {
-					resp[key] = val
-				} else {
-					resp["error"] = err.Error()
-				}
-				jsonResp, _ := json.Marshal(resp)
-				w.Write(jsonResp)
-				done <- struct{}{}
-			}()
-
-			<-done
+			key, val, err := controllers.Get_controller(&newReqBody, db)
+			// fmt.Println(key, val, err)
+			if err == nil {
+				resp[key] = val
+			} else {
+				resp["error"] = err.Error()
+			}
+			jsonResp, _ := json.Marshal(resp)
+			w.Write(jsonResp)
 
 		case "QPUSH":
-			go func() {
-				controllers.Push_controller(&newReqBody, qb)
-				fmt.Println(qb.Data)
-			}()
+			controllers.Push_controller(&newReqBody, qb)
 
 		case "QPOP":
-			go func() {
-				x, err := controllers.Pop_controller(&newReqBody, qb)
-				if err == nil {
-					resp["value"] = x
-				} else {
-					resp["error"] = err.Error()
-				}
-				jsonResp, _ := json.Marshal(resp)
-				w.Write(jsonResp)
-				done <- struct{}{}
-			}()
-
-			<-done
+			x, err := controllers.Pop_controller(&newReqBody, qb)
+			if err == nil {
+				resp["value"] = x
+			} else {
+				resp["error"] = err.Error()
+			}
+			jsonResp, _ := json.Marshal(resp)
+			w.Write(jsonResp)
 		}
-
 	}
 }

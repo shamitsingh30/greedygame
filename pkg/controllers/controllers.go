@@ -8,15 +8,28 @@ import (
 	"github.com/shamitsingh30/greedygame/pkg/models"
 )
 
+func check_existence(key string, db *(models.Datastore)) bool {
+	val, exists := db.Data[key]
+
+	if exists && (val.Expiration.IsZero() || val.Expiration.After(time.Now())) {
+		return true
+	}
+	return false
+}
+
 func Set_controller(body *map[string]string, db *(models.Datastore)) {
 
 	key := (*body)["key"]
 	val := (*body)["value"]
-
 	condition, exist := (*body)["condition"]
+
+	db.Lock()
+	defer db.Unlock()
+
 	if exist {
-		_, _, err := Get_controller(body, db)
-		if (err == nil && condition == "NX") || (err != nil && condition == "XX") {
+		ch := check_existence(key, db)
+
+		if (ch == true && condition == "NX") || (ch == false && condition == "XX") {
 			return
 		}
 	}
@@ -24,37 +37,35 @@ func Set_controller(body *map[string]string, db *(models.Datastore)) {
 	e := models.Token{
 		Value: val,
 	}
-	expiry, exist := (*body)["expiry_time"]
+	expiry, ex := (*body)["expiry_time"]
 
-	if exist {
+	if ex {
 		expiryTime, _ := strconv.Atoi(expiry)
 		e.Expiration = time.Now().Add(time.Duration(expiryTime) * time.Second)
 	}
-	db.Lock()
-	defer db.Unlock()
+
 	db.Data[key] = e
 	return
 }
 
 func Get_controller(body *map[string]string, db *(models.Datastore)) (string, string, error) {
 
-	db.Lock()
-	defer db.Unlock()
-
 	key := (*body)["key"]
-	val, exists := db.Data[key]
 
-	if exists {
-		if !val.Expiration.IsZero() {
-			if db.Data[key].Expiration.Before(time.Now()) {
-				delete(db.Data, key)
-			} else {
-				return key, val.Value, nil
-			}
-		} else {
-			return key, val.Value, nil
-		}
+	db.RLock()
+	val, exists := db.Data[key]
+	db.RUnlock()
+
+	if !exists {
+		return "", "", errors.New("key not found")
 	}
 
-	return "", "", errors.New("key not found")
+	if !val.Expiration.IsZero() && val.Expiration.Before(time.Now()) {
+		db.Lock()
+		delete(db.Data, key)
+		db.Unlock()
+		return "", "", errors.New("key not found")
+	}
+
+	return key, val.Value, nil
 }

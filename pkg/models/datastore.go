@@ -12,7 +12,7 @@ type Token struct {
 
 type Datastore struct {
 	Data map[string]Token
-	sync.Mutex
+	sync.RWMutex
 }
 
 func NewDatastore() *Datastore {
